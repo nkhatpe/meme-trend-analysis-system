@@ -1,0 +1,19 @@
+services:
+  faktory:
+    image: contribsys/faktory:latest
+    container_name: faktory
+    volumes:
+      - ./docker/faktory-data:/var/lib/faktory/db
+    environment:
+      - FAKTORY_PASSWORD=password
+    ports:
+      - "127.0.0.1:7419:7419"
+      - "127.0.0.1:7420:7420"
+
+  mongodb:
+    image: mongodb/mongodb-community-server:latest
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./docker/mongodb-data:/data/db

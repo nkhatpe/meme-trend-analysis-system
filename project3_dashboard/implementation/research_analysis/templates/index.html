@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meme Trend Analysis System</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f4f4f9;
+            color: #333;
+        }
+
+        .header {
+            background-color: #4CAF50;
+            color: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .main-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .filters-card {
+            margin-bottom: 20px;
+        }
+
+        .nav-pills .nav-link {
+            color: #333;
+            margin: 0 5px;
+        }
+
+        .nav-pills .nav-link.active {
+            background-color: #4CAF50;
+        }
+
+        .card {
+            margin-bottom: 20px;
+            box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-header {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .insights-list {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .insights-list li {
+            margin: 10px 0;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+
+        .plots-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .plots-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .plot-container img {
+            width: 100%;
+            height: auto;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .plot-container img:hover {
+            transform: scale(1.02);
+        }
+
+        .analysis-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .analysis-item img {
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .analysis-item img:hover {
+            transform: scale(1.02);
+        }
+
+        /* Modal styles */
+        .modal-xl {
+            max-width: 90%;
+        }
+
+        .modal-body {
+            padding: 0;
+        }
+
+        .modal-content {
+            background-color: transparent;
+            border: none;
+        }
+
+        .modal-body img {
+            width: 100%;
+            height: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="header text-center">
+        <h1 class="mb-0">Meme Trend Analysis System</h1>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-container">
+        <!-- Navigation Pills -->
+        <ul class="nav nav-pills mb-4 justify-content-center">
+            <li class="nav-item">
+                <a class="nav-link {% if analysis_type == 'activity' %}active{% endif %}"
+                    href="?analysis=activity&platform={{ platform }}&start_date={{ start_date }}&end_date={{ end_date }}">
+                    Activity Analysis
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if analysis_type == 'hate_speech' %}active{% endif %}"
+                    href="?analysis=hate_speech&platform={{ platform }}&start_date={{ start_date }}&end_date={{ end_date }}">
+                    Hate Speech Analysis
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if analysis_type == 'image_usage' %}active{% endif %}"
+                    href="?analysis=image_usage&platform={{ platform }}&start_date={{ start_date }}&end_date={{ end_date }}">
+                    Image Usage Analysis
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if analysis_type == 'project2' %}active{% endif %}"
+                    href="?analysis=project2&platform={{ platform }}&start_date={{ start_date }}&end_date={{ end_date }}">
+                    Project 2 Analysis
+                </a>
+            </li>
+        </ul>
+
+        <!-- Filters -->
+        {% if analysis_type != 'project2' %}
+        <div class="card filters-card">
+            <div class="card-body">
+                <form method="get" class="row g-3 align-items-end justify-content-center">
+                    <input type="hidden" name="analysis" value="{{ analysis_type }}">
+
+                    <div class="col-md-3">
+                        <label class="form-label">Platform:</label>
+                        <select name="platform" class="form-select">
+                            <option value="both" {% if platform=='both' %}selected{% endif %}>Both</option>
+                            <option value="reddit" {% if platform=='reddit' %}selected{% endif %}>Reddit</option>
+                            <option value="4chan" {% if platform=='4chan' %}selected{% endif %}>4chan</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">Start Date:</label>
+                        <input type="date" name="start_date" value="{{ start_date }}" class="form-control" required>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">End Date:</label>
+                        <input type="date" name="end_date" value="{{ end_date }}" class="form-control" required>
+                    </div>
+
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-success w-100">Apply Filters</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Reddit Analysis Section -->
+        {% if 'reddit' in insights %}
+        <div class="card">
+            <div class="card-header">
+                <h2 class="h5 mb-0">Reddit Analysis {% if analysis_type == 'activity' %}(r/politics){% endif %}</h2>
+            </div>
+            <div class="card-body">
+                <div class="insights mb-4">
+                    <h3 class="h6 text-success">Key Insights</h3>
+                    <ul class="insights-list">
+                        {% if analysis_type == 'activity' %}
+                        <li>Total Posts/Comments: {{ insights.reddit.total_posts }}</li>
+                        <li>Average Daily Posts: {{ insights.reddit.avg_daily_posts }}</li>
+                        {% else %}
+                        <li>Average Toxicity Confidence: {{ insights.reddit.avg_confidence }}</li>
+                        <li>Average Engagement: {{ insights.reddit.avg_engagement }}</li>
+                        <li>Total Posts Analyzed: {{ insights.reddit.total_posts }}</li>
+                        {% endif %}
+                    </ul>
+                </div>
+                <div class="plots-grid">
+                    {% if analysis_type == 'activity' %}
+                    {% if 'reddit_activity' in plots %}
+                    <div class="plot-container">
+                        <h3 class="h6 text-success text-center mb-3">Daily Activity</h3>
+                        <img src="data:image/png;base64,{{ plots.reddit_activity }}" alt="Reddit Activity"
+                            data-bs-toggle="modal" data-bs-target="#imageModal"
+                            onclick="showImage(this.src, 'Reddit Daily Activity')">
+                    </div>
+                    {% endif %}
+                    {% else %}
+                    {% if 'reddit_trend' in plots %}
+                    <div class="plot-container">
+                        <h3 class="h6 text-success text-center mb-3">Toxicity Trend</h3>
+                        <img src="data:image/png;base64,{{ plots.reddit_trend }}" alt="Reddit Trend"
+                            data-bs-toggle="modal" data-bs-target="#imageModal"
+                            onclick="showImage(this.src, 'Reddit Toxicity Trend')">
+                    </div>
+                    {% endif %}
+                    {% if 'reddit_engagement' in plots %}
+                    <div class="plot-container">
+                        <h3 class="h6 text-success text-center mb-3">Engagement Trend</h3>
+                        <img src="data:image/png;base64,{{ plots.reddit_engagement }}" alt="Reddit Engagement"
+                            data-bs-toggle="modal" data-bs-target="#imageModal"
+                            onclick="showImage(this.src, 'Reddit Engagement Trend')">
+                    </div>
+                    {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- 4chan Analysis Section -->
+        {% if 'chan' in insights %}
+        <div class="card">
+            <div class="card-header">
+                <h2 class="h5 mb-0">4chan Analysis {% if analysis_type == 'activity' %}(/pol/){% endif %}</h2>
+            </div>
+            <div class="card-body">
+                <div class="insights mb-4">
+                    <h3 class="h6 text-success">Key Insights</h3>
+                    <ul class="insights-list">
+                        {% if analysis_type == 'activity' %}
+                        <li>Total Posts/Comments: {{ insights.chan.total_posts }}</li>
+                        <li>Average Daily Posts: {{ insights.chan.avg_daily_posts }}</li>
+                        {% else %}
+                        <li>Average Toxicity Confidence: {{ insights.chan.avg_confidence }}</li>
+                        <li>Average Engagement: {{ insights.chan.avg_engagement }}</li>
+                        <li>Total Posts Analyzed: {{ insights.chan.total_posts }}</li>
+                        {% endif %}
+                    </ul>
+                </div>
+                <div class="plots-grid">
+                    {% if analysis_type == 'activity' %}
+                    {% if 'chan_activity' in plots %}
+                    <div class="plot-container">
+                        <h3 class="h6 text-success text-center mb-3">Daily Activity</h3>
+                        <img src="data:image/png;base64,{{ plots.chan_activity }}" alt="4chan Activity"
+                            data-bs-toggle="modal" data-bs-target="#imageModal"
+                            onclick="showImage(this.src, '4chan Daily Activity')">
+                    </div>
+                    {% endif %}
+                    {% else %}
+                    {% if 'chan_trend' in plots %}
+                    <div class="plot-container">
+                        <h3 class="h6 text-success text-center mb-3">Toxicity Trend</h3>
+                        <img src="data:image/png;base64,{{ plots.chan_trend }}" alt="4chan Trend" data-bs-toggle="modal"
+                            data-bs-target="#imageModal" onclick="showImage(this.src, '4chan Toxicity Trend')">
+                    </div>
+                    {% endif %}
+                    {% if 'chan_engagement' in plots %}
+                    <div class="plot-container">
+                        <h3 class="h6 text-success text-center mb-3">Engagement Trend</h3>
+                        <img src="data:image/png;base64,{{ plots.chan_engagement }}" alt="4chan Engagement"
+                            data-bs-toggle="modal" data-bs-target="#imageModal"
+                            onclick="showImage(this.src, '4chan Engagement Trend')">
+                    </div>
+                    {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Project 2 Analysis Section -->
+        {% if analysis_type == 'project2' %}
+        <div class="card">
+            <div class="card-header">
+                <h2 class="h5 mb-0">Project 2 Analysis Results</h2>
+            </div>
+            <div class="card-body">
+                <div class="analysis-grid">
+                    {% for image in analysis_images %}
+                    <div class="analysis-item">
+                        <h3 class="h6 text-success text-center mb-3">
+                            {{ image.replace('.png', '').replace('_', ' ').title() }}
+                        </h3>
+                        <img src="{{ url_for('static', filename=image) }}" alt="{{ image }}" class="img-fluid rounded"
+                            data-bs-toggle="modal" data-bs-target="#imageModal"
+                            onclick="showImage('{{ url_for('static', filename=image) }}', '{{ image.replace('.png', '').replace('_', ' ').title() }}')">
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if analysis_type == 'activity' and platform in ['both', 'reddit'] and 'reddit_heatmap' in plots %}
+        <div class="card">
+            <div class="card-header">
+                <h2 class="h5 mb-0">r/politics Commenting Patterns</h2>
+            </div>
+            <div class="card-body">
+                <div class="insights mb-4">
+                    <h3 class="h6 text-success">Pattern Insights</h3>
+                    <ul class="insights-list">
+                        <li>Total Comments: {{ patterns.reddit.total_comments }}</li>
+                        <li>Average Comments per Hour: {{ patterns.reddit.avg_comments_per_hour }}</li>
+                        <li>Peak Hour (UTC): {{ patterns.reddit.peak_hour }}:00 ({{ patterns.reddit.peak_hour_avg }}
+                            comments/day)</li>
+                        <li>Busiest Date: {{ patterns.reddit.busiest_date }} ({{ patterns.reddit.busiest_date_total }}
+                            comments)</li>
+                    </ul>
+                </div>
+                <div class="plot-container">
+                    <img src="data:image/png;base64,{{ plots.reddit_heatmap }}" alt="Reddit Commenting Patterns"
+                        data-bs-toggle="modal" data-bs-target="#imageModal"
+                        onclick="showImage(this.src, 'Reddit Commenting Patterns')">
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if analysis_type == 'activity' and platform in ['both', '4chan'] and 'chan_heatmap' in plots %}
+        <div class="card">
+            <div class="card-header">
+                <h2 class="h5 mb-0">/pol/ Commenting Patterns</h2>
+            </div>
+            <div class="card-body">
+                <div class="insights mb-4">
+                    <h3 class="h6 text-success">Pattern Insights</h3>
+                    <ul class="insights-list">
+                        <li>Total Comments: {{ patterns.chan.total_comments }}</li>
+                        <li>Average Comments per Hour: {{ patterns.chan.avg_comments_per_hour }}</li>
+                        <li>Peak Hour (UTC): {{ patterns.chan.peak_hour }}:00 ({{ patterns.chan.peak_hour_avg }}
+                            comments/day)</li>
+                        <li>Busiest Date: {{ patterns.chan.busiest_date }} ({{ patterns.chan.busiest_date_total }}
+                            comments)</li>
+                    </ul>
+                </div>
+                <div class="plot-container">
+                    <img src="data:image/png;base64,{{ plots.chan_heatmap }}" alt="4chan Commenting Patterns"
+                        data-bs-toggle="modal" data-bs-target="#imageModal"
+                        onclick="showImage(this.src, '4chan Commenting Patterns')">
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if analysis_type == 'image_usage' %}
+        <div class="card">
+            <div class="card-header">
+                <h2 class="h5 mb-0">4chan Image Usage Analysis</h2>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card mb-4">
+                            <div class="card-header bg-light">
+                                <h3 class="h6 mb-0 text-dark">/pol/ Statistics</h3>
+                            </div>
+                            <div class="card-body">
+                                <ul class="insights-list">
+                                    <li>Total Posts: {{ insights.pol.total_posts }}</li>
+                                    <li>JPG Images: {{ insights.pol.jpg_ratio }}</li>
+                                    <li>PNG Images: {{ insights.pol.png_ratio }}</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card mb-4">
+                            <div class="card-header bg-light">
+                                <h3 class="h6 mb-0 text-dark">/b/ Statistics</h3>
+                            </div>
+                            <div class="card-body">
+                                <ul class="insights-list">
+                                    <li>Total Posts: {{ insights.b.total_posts }}</li>
+                                    <li>JPG Images: {{ insights.b.jpg_ratio }}</li>
+                                    <li>PNG Images: {{ insights.b.png_ratio }}</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="plots-grid">
+                    {% if 'daily_usage' in plots %}
+                    <div class="plot-container">
+                        <h3 class="h6 text-success text-center mb-3">Daily Image Usage</h3>
+                        <img src="data:image/png;base64,{{ plots.daily_usage }}" alt="Daily Image Usage"
+                            data-bs-toggle="modal" data-bs-target="#imageModal"
+                            onclick="showImage(this.src, 'Daily Image Usage')">
+                    </div>
+                    {% endif %}
+
+                    {% if 'ext_dist' in plots %}
+                    <div class="plot-container">
+                        <h3 class="h6 text-success text-center mb-3">Image Extension Distribution</h3>
+                        <img src="data:image/png;base64,{{ plots.ext_dist }}" alt="Extension Distribution"
+                            data-bs-toggle="modal" data-bs-target="#imageModal"
+                            onclick="showImage(this.src, 'Image Extension Distribution')">
+                    </div>
+                    {% endif %}
+
+                    {% if 'hourly_pattern' in plots %}
+                    <div class="plot-container">
+                        <h3 class="h6 text-success text-center mb-3">Hourly Image Usage Patterns</h3>
+                        <img src="data:image/png;base64,{{ plots.hourly_pattern }}" alt="Hourly Patterns"
+                            data-bs-toggle="modal" data-bs-target="#imageModal"
+                            onclick="showImage(this.src, 'Hourly Image Usage Patterns')">
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </main>
+
+    <!-- Image Modal -->
+    <div class="modal fade" id="imageModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title" id="modalTitle"></h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <img id="modalImage" src="" alt="Modal Image" class="img-fluid">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Modal Image Handler -->
+    <script>
+        function showImage(src, title) {
+            document.getElementById('modalImage').src = src;
+            document.getElementById('modalTitle').textContent = title;
+        }
+    </script>
+</body>
+
+</html>
